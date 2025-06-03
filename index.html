@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- MusiTrack v1.0.2 - GitHub Pages Edition -->
+<!-- MusiTrack v1.0.3 - GitHub Pages Edition -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -102,13 +102,13 @@
             url.searchParams.append('scope', scopes);
             url.searchParams.append('response_type', 'token');
             url.searchParams.append('show_dialog', 'true');
-            console.log('Auth URL:', url.toString()); // Debug log
+            console.log('Auth URL:', url.toString());
             return url.toString();
         }
 
         document.getElementById('connectButton').onclick = function() {
             const authUrl = getAuthUrl();
-            console.log('Redirecting to:', authUrl); // Debug log
+            console.log('Redirecting to:', authUrl);
             window.location.href = authUrl;
         };
 
@@ -116,22 +116,28 @@
             const hash = window.location.hash.substring(1);
             const params = new URLSearchParams(hash);
             const token = params.get('access_token');
-            console.log('Got token:', token ? 'yes' : 'no'); // Debug log
+            console.log('Got token:', token ? 'yes' : 'no');
             return token;
         }
 
         async function fetchFromSpotify(endpoint, accessToken) {
-            console.log('Fetching:', endpoint); // Debug log
-            const response = await fetch(`https://api.spotify.com/v1/${endpoint}`, {
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`
+            console.log('Fetching:', endpoint);
+            try {
+                const response = await fetch(`https://api.spotify.com/v1/${endpoint}`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Spotify API error:', response.status, errorText);
+                    throw new Error(`Failed to fetch from Spotify: ${response.status} ${errorText}`);
                 }
-            });
-            if (!response.ok) {
-                console.error('Spotify API error:', response.status, await response.text()); // Debug log
-                throw new Error('Failed to fetch from Spotify');
+                return response.json();
+            } catch (error) {
+                console.error('Fetch error:', error);
+                throw error;
             }
-            return response.json();
         }
 
         function showLoading() {
@@ -150,19 +156,22 @@
         }
 
         async function init() {
-            console.log('Initializing app...'); // Debug log
+            console.log('Initializing app...');
+            console.log('Current pathname:', window.location.pathname);
+            console.log('Current URL:', window.location.href);
+            
             const token = getAccessToken();
             if (token) {
                 try {
                     showLoading();
                     
-                    // Clear hash from URL but keep the path
-                    history.replaceState(null, null, window.location.pathname);
+                    // Clear hash but maintain the correct path for GitHub Pages
+                    const basePath = '/musitrack/';
+                    history.replaceState(null, null, basePath);
                     
-                    // Get user profile
-                    console.log('Fetching user profile...'); // Debug log
+                    console.log('Fetching user profile...');
                     const profile = await fetchFromSpotify('me', token);
-                    console.log('Got profile:', profile.display_name); // Debug log
+                    console.log('Got profile:', profile.display_name);
                     
                     // Show profile
                     const profileDiv = document.getElementById('profile');
@@ -180,50 +189,53 @@
                         </div>
                     `;
 
-                    // Get recommendations
-                    console.log('Fetching top tracks...'); // Debug log
+                    console.log('Fetching top tracks...');
                     const topTracks = await fetchFromSpotify('me/top/tracks?limit=5', token);
-                    console.log('Got top tracks:', topTracks.items.length); // Debug log
+                    console.log('Got top tracks:', topTracks.items.length);
                     
-                    console.log('Fetching recommendations...'); // Debug log
-                    const recommendations = await fetchFromSpotify(
-                        `recommendations?seed_tracks=${topTracks.items.map(t => t.id).join(',')}`,
-                        token
-                    );
-                    console.log('Got recommendations:', recommendations.tracks.length); // Debug log
+                    if (topTracks.items.length > 0) {
+                        console.log('Fetching recommendations...');
+                        const recommendations = await fetchFromSpotify(
+                            `recommendations?seed_tracks=${topTracks.items.map(t => t.id).join(',')}`,
+                            token
+                        );
+                        console.log('Got recommendations:', recommendations.tracks.length);
 
-                    // Show recommendations
-                    const recsDiv = document.getElementById('recommendations');
-                    recsDiv.classList.remove('hidden');
-                    recsDiv.innerHTML = `
-                        <h2 class="text-3xl font-bold mb-6 gradient-text">Recommended for You</h2>
-                        <div class="space-y-4">
-                            ${recommendations.tracks.map(track => `
-                                <div class="p-4 rounded-lg bg-opacity-20 bg-white hover:bg-opacity-30 transition-all duration-300">
-                                    <p class="font-semibold text-xl">${track.name}</p>
-                                    <p class="text-gray-400">${track.artists.map(a => a.name).join(', ')}</p>
-                                </div>
-                            `).join('')}
-                        </div>
-                    `;
+                        // Show recommendations
+                        const recsDiv = document.getElementById('recommendations');
+                        recsDiv.classList.remove('hidden');
+                        recsDiv.innerHTML = `
+                            <h2 class="text-3xl font-bold mb-6 gradient-text">Recommended for You</h2>
+                            <div class="space-y-4">
+                                ${recommendations.tracks.map(track => `
+                                    <div class="p-4 rounded-lg bg-opacity-20 bg-white hover:bg-opacity-30 transition-all duration-300">
+                                        <p class="font-semibold text-xl">${track.name}</p>
+                                        <p class="text-gray-400">${track.artists.map(a => a.name).join(', ')}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    } else {
+                        console.log('No top tracks found');
+                    }
 
                     document.getElementById('loading').classList.add('hidden');
                 } catch (error) {
-                    console.error('Error:', error); // Debug log
+                    console.error('Error:', error);
                     showError();
                 }
             } else {
-                console.log('No token found'); // Debug log
+                console.log('No token found');
             }
         }
 
         function logout() {
-            console.log('Logging out...'); // Debug log
-            window.location.href = window.location.pathname;
+            console.log('Logging out...');
+            window.location.href = '/musitrack/';
         }
 
         // Start the app
-        console.log('Starting app...'); // Debug log
+        console.log('Starting app...');
         init();
     </script>
 </body>
