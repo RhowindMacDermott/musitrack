@@ -79,9 +79,7 @@
 
     <script>
         const clientId = 'f8c7759f93dd494ebdd109bccbb2df9d';
-        const redirectUri = window.location.hostname === 'localhost' || window.location.hostname === '0.0.0.0'
-            ? 'http://localhost:8000'
-            : 'https://rhowindmacdermott.github.io/musitrack/';
+        const redirectUri = 'https://rhowindmacdermott.github.io/musitrack/';
         
         const scopes = [
             'user-read-private',
@@ -147,10 +145,7 @@
                     showLoading();
                     
                     // Clear hash from URL but keep the path
-                    const basePath = window.location.hostname === 'localhost' || window.location.hostname === '0.0.0.0'
-                        ? '/'
-                        : '/musitrack/';
-                    history.replaceState(null, null, basePath);
+                    history.replaceState(null, null, '/musitrack/');
                     
                     // Get user profile
                     const profile = await fetchFromSpotify('me', token);
@@ -202,10 +197,7 @@
         }
 
         function logout() {
-            const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '0.0.0.0'
-                ? '/'
-                : '/musitrack/';
-            window.location.href = baseUrl;
+            window.location.href = '/musitrack/';
         }
 
         // Start the app
