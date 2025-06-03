@@ -58,6 +58,7 @@
             <p class="text-gray-300 mb-8">Connect with Spotify to discover your music journey and get personalized recommendations.</p>
             <button 
                 id="connectButton"
+                type="button"
                 class="bg-gradient-to-r from-green-500 to-emerald-700 text-white py-3 px-8 rounded-lg font-semibold text-lg hover:from-green-600 hover:to-emerald-800 transform hover:scale-105 transition-all duration-300 shadow-lg"
             >
                 Connect with Spotify
@@ -106,11 +107,16 @@
             return url.toString();
         }
 
-        document.getElementById('connectButton').onclick = function() {
-            const authUrl = getAuthUrl();
-            console.log('Redirecting to:', authUrl);
-            window.location.href = authUrl;
-        };
+document.addEventListener('DOMContentLoaded', function() {
+    const connectButton = document.getElementById('connectButton');
+    connectButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('Connect button clicked.');
+        const authUrl = getAuthUrl();
+        console.log('Redirecting to:', authUrl);
+        window.location.href = authUrl;
+    });
+});
 
         function getAccessToken() {
             const hash = window.location.hash.substring(1);
