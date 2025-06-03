@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- MusiTrack v1.0.2 - GitHub Pages Edition -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -101,26 +102,33 @@
             url.searchParams.append('scope', scopes);
             url.searchParams.append('response_type', 'token');
             url.searchParams.append('show_dialog', 'true');
+            console.log('Auth URL:', url.toString()); // Debug log
             return url.toString();
         }
 
         document.getElementById('connectButton').onclick = function() {
-            window.location.href = getAuthUrl();
+            const authUrl = getAuthUrl();
+            console.log('Redirecting to:', authUrl); // Debug log
+            window.location.href = authUrl;
         };
 
         function getAccessToken() {
             const hash = window.location.hash.substring(1);
             const params = new URLSearchParams(hash);
-            return params.get('access_token');
+            const token = params.get('access_token');
+            console.log('Got token:', token ? 'yes' : 'no'); // Debug log
+            return token;
         }
 
         async function fetchFromSpotify(endpoint, accessToken) {
+            console.log('Fetching:', endpoint); // Debug log
             const response = await fetch(`https://api.spotify.com/v1/${endpoint}`, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`
                 }
             });
             if (!response.ok) {
+                console.error('Spotify API error:', response.status, await response.text()); // Debug log
                 throw new Error('Failed to fetch from Spotify');
             }
             return response.json();
@@ -142,6 +150,7 @@
         }
 
         async function init() {
+            console.log('Initializing app...'); // Debug log
             const token = getAccessToken();
             if (token) {
                 try {
@@ -151,7 +160,9 @@
                     history.replaceState(null, null, window.location.pathname);
                     
                     // Get user profile
+                    console.log('Fetching user profile...'); // Debug log
                     const profile = await fetchFromSpotify('me', token);
+                    console.log('Got profile:', profile.display_name); // Debug log
                     
                     // Show profile
                     const profileDiv = document.getElementById('profile');
@@ -170,11 +181,16 @@
                     `;
 
                     // Get recommendations
+                    console.log('Fetching top tracks...'); // Debug log
                     const topTracks = await fetchFromSpotify('me/top/tracks?limit=5', token);
+                    console.log('Got top tracks:', topTracks.items.length); // Debug log
+                    
+                    console.log('Fetching recommendations...'); // Debug log
                     const recommendations = await fetchFromSpotify(
                         `recommendations?seed_tracks=${topTracks.items.map(t => t.id).join(',')}`,
                         token
                     );
+                    console.log('Got recommendations:', recommendations.tracks.length); // Debug log
 
                     // Show recommendations
                     const recsDiv = document.getElementById('recommendations');
@@ -193,17 +209,21 @@
 
                     document.getElementById('loading').classList.add('hidden');
                 } catch (error) {
-                    console.error('Error:', error);
+                    console.error('Error:', error); // Debug log
                     showError();
                 }
+            } else {
+                console.log('No token found'); // Debug log
             }
         }
 
         function logout() {
+            console.log('Logging out...'); // Debug log
             window.location.href = window.location.pathname;
         }
 
         // Start the app
+        console.log('Starting app...'); // Debug log
         init();
     </script>
 </body>
